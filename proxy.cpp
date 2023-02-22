@@ -75,7 +75,7 @@ ServerResponse* forward(int length,std::string request_info,ClientRequest* reque
   	std::cerr<<"send error!!"<<std::endl;
   	exit(1);
   }
-  char response_char[2147483647];
+  char * response_star[2147483647];
   int len=recv(server_fd,response_char,sizeof(response_char),0);
   std::string Response_Info=std::string(response_char,len);
   ServerResponse* response=new ServerResponse(Response_Info);
