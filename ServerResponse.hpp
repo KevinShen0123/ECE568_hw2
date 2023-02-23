@@ -9,8 +9,10 @@ class ServerResponse{
 	std::string response_body;
 	std::string status_info;
 	std::map<std::string,std::string> response_info;
+  std::string whole_response;
 	std::string first_line;
 		ServerResponse(std::string response){
+     this->whole_response=response;
 			parse(response);
 		}
 		void parse(std::string response_parse);
