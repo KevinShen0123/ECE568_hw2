@@ -73,12 +73,12 @@ std::vector<std::string> Cache::get_cache_control(ServerResponse* response){
 		}
 	     return cache_controls;
 }
-void Cache::check_request_save(int server_fd,ClientRequest* request){
+ServerResponse* Cache::check_request_save(int server_fd,ClientRequest* request){
 	int req_id=request->ID;
 	std::string request_line=request->line_one;
 	if(in_cache(request_line)==false){
 		std::cout<<req_id<<":"<<" not in cache"<<std::endl;
-		return;
+		return NULL;
 	}
 	std::string cached_response=cache_map.find(request_line)->second;
 	ServerResponse* response=new ServerResponse(cached_response);
@@ -87,11 +87,14 @@ void Cache::check_request_save(int server_fd,ClientRequest* request){
     if(std::find(controls.begin(),controls.end(),std::string("no-cache"))!=controls.end()){
         if(validate(server_fd,request,response)){
         	std::cout<<req_id<<": valid"<<std::endl;
+		 return response;
 		}
 	}
 	if(validate(server_fd,request,response)){
         	std::cout<<req_id<<": valid"<<std::endl;
+		return response;
 	}
+	return NULL;
 }
 void Cache::check_response_save(int server_fd,ClientRequest* request, ServerResponse* response ){
 	std::vector<std::string> controls=get_cache_control(response);
