@@ -3,10 +3,10 @@
 #include "ClientRequest.hpp"
 #include <vector>
 class Cache{
+private:
     std::map<std::string, std::string> cache_map;
-	Cache(){
-	    
-	}
+public:
+	Cache();
 	bool in_cache(std::string request);
 	bool validate(int server_fd, ClientRequest* request,ServerResponse* response);
 	bool can_cache(std::string response);
