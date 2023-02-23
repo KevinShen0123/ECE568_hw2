@@ -87,6 +87,8 @@ void* request_process(void* fds){
 			connect(length,request_info,request,server_fd,client_fd);
 		}
 		 //pthread_mutex_unlock(&lock);
+	close(server_fd);
+	close(client_fd);
    return NULL;		
 }
 
