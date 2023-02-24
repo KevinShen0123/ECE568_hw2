@@ -79,15 +79,21 @@ bool Cache::check_expire(std::ofstream&LogStream,pthread_mutex_t lock,int id,std
     return false;
 }
 std::vector<std::string> Cache::get_cache_control(ServerResponse* response){
+	   std::cout<<"RRRR4"<<std::endl;
 		std::map<std::string, std::string> info_map=response->response_info;
+		std::cout<<"RRRR5"<<std::endl;
 		bool has_cache_control=(info_map.find("Cache-Control")!=info_map.end());
+		std::cout<<"RRRR6"<<std::endl;
 		std::vector<std::string> cache_controls;
-		std::string controls=info_map.find("Cache-Control")->second;
+		if(has_cache_control){
+			std::string controls=info_map.find("Cache-Control")->second;
+		std::cout<<"RRRR7"<<std::endl;
 		char* cache_str;
 		cache_str=strtok((char*)controls.c_str(),",");
 		while(cache_str!=NULL){
 			cache_controls.push_back(std::string(cache_str));
 			cache_str=strtok(NULL,",");
+		}
 		}
 	     return cache_controls;
 }
@@ -97,14 +103,17 @@ ServerResponse* Cache::check_request_save(std::ofstream&LogStream,pthread_mutex_
 	if(in_cache(request_line)==false){
 		pthread_mutex_lock(&lock);
 		LogStream<<req_id<<":"<<" not in cache"<<std::endl;
-		pthread_mutex_lock(&lock);
+		pthread_mutex_unlock(&lock);
 		return NULL;
 	}
 	std::string cached_response=cache_map.find(request_line)->second;
 	ServerResponse* response=new ServerResponse(cached_response);
     bool has_expire=check_expire(LogStream,lock,req_id,": in cache, but expired at",response);
     std::vector<std::string> controls=get_cache_control(response);
-    if(std::find(controls.begin(),controls.end(),std::string("no-cache"))!=controls.end()){
+    std::cout<<"Cache!!!!" <<std::endl;
+    if(controls.size()>0){
+    	std::cout<<"Yes!!!"<<std::endl;
+    	if(std::find(controls.begin(),controls.end(),std::string("no-cache"))!=controls.end()){
         if(validate(LogStream,lock,server_fd,request,response)){
         	pthread_mutex_lock(&lock);
         	LogStream<<req_id<<": valid"<<std::endl;
@@ -118,12 +127,19 @@ ServerResponse* Cache::check_request_save(std::ofstream&LogStream,pthread_mutex_
         	pthread_mutex_unlock(&lock);
         	return response;
 	}
-	return NULL;
+	}else{
+		LogStream<<req_id<<"in cache , but have no cache control"<<std::endl;
+	}
+	return response;
 }
 void Cache::check_response_save(std::ofstream&LogStream,pthread_mutex_t lock,int server_fd,ClientRequest* request, ServerResponse* response ){
+	std::cout<<"RRRR3"<<std::endl;
 	std::vector<std::string> controls=get_cache_control(response);
+	std::cout<<"RRRR2"<<std::endl;
 	std::string request_line=request->line_one;
+	std::cout<<"RRRR1"<<std::endl;
 	int req_id=request->ID;
+	std::cout<<"RRRR"<<std::endl;
 	if(in_cache(request_line)==false){
 		bool no_store=(std::find(controls.begin(),controls.end(),"no-store")!=controls.end());
 		if(no_store){
@@ -132,6 +148,14 @@ void Cache::check_response_save(std::ofstream&LogStream,pthread_mutex_t lock,int
 			pthread_mutex_unlock(&lock);
 			return;
 		}
+		bool isChunk=response->isChunk;
+		if(isChunk){
+			pthread_mutex_lock(&lock);
+			LogStream<<"Not cacheable because chuncked"<<std::endl;
+			pthread_mutex_unlock(&lock);
+			return;
+		}
+		std::cout<<"hello response!!!"<<std::endl;
 		this->cache_map.insert(this->cache_map.begin(),std::pair<std::string,std::string>(request_line,response->whole_response));
 		return;
 	}
